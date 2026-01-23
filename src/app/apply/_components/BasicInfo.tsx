@@ -13,17 +13,22 @@ import {BasicInfoFieldConfig} from '@/schemas/apply/apply-type';
 import {BasicInfoFormData} from '@/schemas/apply/apply-schema';
 import {getBasicInfo} from '@/services/api/apply/apply.api';
 import {QUERY_KEYS} from '@/constants/query-keys';
+import {StepIndicator} from '@/components/navigation/StepIndicator';
 
 interface BasicInfoProps {
   onSave: () => void;
   onNext: () => void;
   readOnly?: boolean;
+  showSaveSuccess: boolean;
+  step: number;
 }
 
 export const BasicInfo = ({
+  step,
   onNext,
   onSave,
   readOnly = false,
+  showSaveSuccess,
 }: BasicInfoProps) => {
   const searchParams = useSearchParams();
   const applicationId = searchParams.get('id');
@@ -32,8 +37,13 @@ export const BasicInfo = ({
     register,
     control,
     reset,
-    formState: {errors},
+    trigger,
+    formState: {errors, isValid},
   } = useFormContext<BasicInfoFormData>();
+
+  useEffect(() => {
+    trigger();
+  }, [trigger]);
 
   const hasInitializedRef = useRef(false);
 
@@ -77,18 +87,25 @@ export const BasicInfo = ({
       return (
         <fieldset key={name} className='flex flex-1 flex-col gap-2'>
           <legend className='mb-3.5 text-h5 text-neutral-600'>{label}</legend>
-          <div className='flex gap-[58px] pt-13.5'>
-            {options?.map((opt) => (
-              <FormRadio
-                key={opt.value}
-                label={opt.label}
-                value={opt.value}
-                readOnly={readOnly}
-                {...register(name)}
-              />
-            ))}
-          </div>
-          <div className='min-h-[24px]'>
+          <Controller
+            name={name}
+            control={control}
+            render={({field}) => (
+              <div className='flex gap-[58px] pt-11'>
+                {options?.map((opt) => (
+                  <FormRadio
+                    key={opt.value}
+                    label={opt.label}
+                    value={opt.value}
+                    checked={field.value === opt.value}
+                    onChange={() => field.onChange(opt.value)}
+                    readOnly={readOnly}
+                  />
+                ))}
+              </div>
+            )}
+          />
+          <div>
             {error && (
               <span className='text-body-l text-alert'>
                 {error.message ?? ''}
@@ -101,7 +118,7 @@ export const BasicInfo = ({
 
     if (type === 'dropdown') {
       return (
-        <div key={name} className='flex flex-1 flex-col gap-2'>
+        <div key={name} className='flex flex-1 flex-col'>
           <Controller
             name={name}
             control={control}
@@ -118,9 +135,9 @@ export const BasicInfo = ({
               />
             )}
           />
-          <div className='min-h-[24px]'>
+          <div>
             {error && (
-              <span className='text-body-l text-alert'>
+              <span className='pt-6 text-body-l text-alert'>
                 {error.message ?? ''}
               </span>
             )}
@@ -137,6 +154,7 @@ export const BasicInfo = ({
           placeholder={placeholder}
           readOnly={readOnly}
           autoComplete={autocomplete}
+          maxLength={200}
           {...register(name)}
           error={error?.message ?? ''}
           className='w-full'
@@ -146,8 +164,11 @@ export const BasicInfo = ({
   };
 
   return (
-    <div className='flex w-full flex-col gap-[81px]'>
-      <div className='flex flex-col gap-[81px]'>
+    <div className='flex w-full flex-col gap-5'>
+      <div className='flex justify-center pt-5'>
+        <StepIndicator currentStep={step} totalSteps={3} />
+      </div>
+      <div className='flex flex-col gap-3.5'>
         {BASIC_INFO_FIELDS.map((item) => {
           const key =
             'row' in item ? item.row.map((f) => f.name).join('-') : item.name;
@@ -161,13 +182,14 @@ export const BasicInfo = ({
         })}
       </div>
 
-      <div className='flex flex-col gap-[26px]'>
+      <div className='flex flex-col gap-3.5'>
         <FullButton
           label='다음'
           variant='primary'
           labelTypo='h4'
           onClick={onNext}
           type='button'
+          disabled={!isValid}
         />
         <FullButton
           label='저장하기'
@@ -177,6 +199,9 @@ export const BasicInfo = ({
           onClick={onSave}
           type='button'
         />
+        {showSaveSuccess && (
+          <p className='text-center text-primary'>저장이 완료되었습니다</p>
+        )}
       </div>
     </div>
   );

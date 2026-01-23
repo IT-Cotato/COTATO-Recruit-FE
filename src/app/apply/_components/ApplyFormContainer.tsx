@@ -1,7 +1,6 @@
 'use client';
 
 import {FormProvider} from 'react-hook-form';
-import {StepIndicator} from '@/components/navigation/StepIndicator';
 import {BasicInfo} from '@/app/apply/_components/BasicInfo';
 import {PartQuestion} from '@/app/apply/_components/PartQuestion';
 import {EtcInfo} from '@/app/apply/_components/EtcInfo';
@@ -14,7 +13,6 @@ import {useRecruitmentScheduleQuery} from '@/hooks/queries/useRecruitmentSchedul
 import {Spinner} from '@/components/ui/Spinner';
 
 const STEP_TITLES = {
-  1: '기본 인적사항',
   2: '파트별 질문',
   3: '기타 질문',
 } as const;
@@ -30,6 +28,7 @@ export const ApplyFormContainer = () => {
     isConfirmModalOpen,
     closeConfirmModal,
     handleConfirmSubmit,
+    showSaveSuccess,
   } = useApplyFormController();
 
   const {data: recruitmentStatus, isLoading} = useRecruitmentStatusQuery();
@@ -55,8 +54,8 @@ export const ApplyFormContainer = () => {
           />
         )}
 
-        <div className='flex w-full max-w-[1196px] flex-col gap-[125px] py-20'>
-          <div className='flex flex-col gap-15'>
+        <div className='flex w-full max-w-[1100px] flex-col py-[42.5px]'>
+          <div className='flex flex-col gap-3.5'>
             <h1 className='text-h1 text-neutral-800'>
               <span aria-hidden='true'>🥔</span>
               &nbsp;코테이토 {generation}기 지원서&nbsp;
@@ -76,25 +75,33 @@ export const ApplyFormContainer = () => {
             {STEP_TITLES[step as keyof typeof STEP_TITLES]}
           </h2>
 
-          <div className='flex w-full flex-col gap-[81px]'>
-            <div className='flex justify-center'>
-              <StepIndicator currentStep={step} totalSteps={3} />
-            </div>
-
+          <div className='flex w-full flex-col gap-[20px]'>
             <FormProvider {...methods}>
               <form onSubmit={handleFinalSubmit} key={step}>
                 {step === 1 && (
-                  <BasicInfo onNext={handleNext} onSave={handleSave} />
+                  <BasicInfo
+                    step={step}
+                    onNext={handleNext}
+                    onSave={handleSave}
+                    showSaveSuccess={showSaveSuccess}
+                  />
                 )}
                 {step === 2 && (
                   <PartQuestion
+                    step={step}
                     onPrev={handlePrev}
                     onNext={handleNext}
                     onSave={handleSave}
+                    showSaveSuccess={showSaveSuccess}
                   />
                 )}
                 {step === 3 && (
-                  <EtcInfo onPrev={handlePrev} onSave={handleSave} />
+                  <EtcInfo
+                    step={step}
+                    onPrev={handlePrev}
+                    onSave={handleSave}
+                    showSaveSuccess={showSaveSuccess}
+                  />
                 )}
               </form>
             </FormProvider>

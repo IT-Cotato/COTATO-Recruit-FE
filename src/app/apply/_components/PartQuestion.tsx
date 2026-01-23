@@ -12,14 +12,23 @@ import {useUploadFile} from '@/hooks/mutations/useApply.mutation';
 import {PART_TABS} from '@/constants/admin/admin-application-questions';
 import {PartType} from '@/schemas/admin/admin-application-questions.schema';
 import {Spinner} from '@/components/ui/Spinner';
+import {StepIndicator} from '@/components/navigation/StepIndicator';
 
 interface PartQuestionProps {
+  step: number;
   onPrev: () => void;
   onNext: () => void;
   onSave: () => void;
+  showSaveSuccess: boolean;
 }
 
-export const PartQuestion = ({onPrev, onNext, onSave}: PartQuestionProps) => {
+export const PartQuestion = ({
+  step,
+  onPrev,
+  onNext,
+  onSave,
+  showSaveSuccess,
+}: PartQuestionProps) => {
   const searchParams = useSearchParams();
   const {
     register,
@@ -44,6 +53,15 @@ export const PartQuestion = ({onPrev, onNext, onSave}: PartQuestionProps) => {
     useGetPartQuestionsQuery(applicationId);
 
   const {mutate: uploadFile} = useUploadFile();
+
+  const isAllAnswersFilled = (() => {
+    if (!questionsData?.questionsWithAnswers) return false;
+    const textQuestions = questionsData.questionsWithAnswers.slice(0, -1);
+    return textQuestions.every((q) => {
+      const answer = watch(`ans_${q.questionId}`);
+      return answer && answer.trim().length > 0;
+    });
+  })();
 
   const hasInitializedRef = useRef(false);
 
@@ -88,9 +106,13 @@ export const PartQuestion = ({onPrev, onNext, onSave}: PartQuestionProps) => {
   return (
     <div className='flex w-full flex-col gap-[30px]'>
       <div className='flex flex-col gap-7.5'>
-        <h3 className='text-h3 text-neutral-600'>
+        <h3 className='text-h3 text-primary'>
           {activePartLabel} 파트에 관한 질문입니다.
         </h3>
+
+        <div className='flex justify-center py-4'>
+          <StepIndicator currentStep={step} totalSteps={3} />
+        </div>
 
         {isLoading ? (
           <div className='flex h-full w-full items-center justify-center'>
@@ -154,7 +176,7 @@ export const PartQuestion = ({onPrev, onNext, onSave}: PartQuestionProps) => {
           <FullButton
             label='이전'
             variant='primary'
-            backgroundColor='neutral-300'
+            backgroundColor='neutral-600'
             labelTypo='h4'
             onClick={onPrev}
             type='button'
@@ -165,6 +187,7 @@ export const PartQuestion = ({onPrev, onNext, onSave}: PartQuestionProps) => {
             labelTypo='h4'
             type='button'
             onClick={onNext}
+            disabled={!isAllAnswersFilled}
           />
         </div>
 
@@ -176,6 +199,9 @@ export const PartQuestion = ({onPrev, onNext, onSave}: PartQuestionProps) => {
           labelTypo='h4'
           onClick={onSave}
         />
+        {showSaveSuccess && (
+          <p className='text-center text-primary'>저장이 완료되었습니다</p>
+        )}
       </div>
     </div>
   );

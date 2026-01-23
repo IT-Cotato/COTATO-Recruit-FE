@@ -14,7 +14,8 @@ import {useShallow} from 'zustand/shallow';
 import {LoginModal} from '@/components/modal/LoginModal';
 import {useState} from 'react';
 import {ROUTES} from '@/constants/routes';
-import {useSubmissionStore} from '@/store/useSubmissionStore';
+import {useApplicationStatusQuery} from '@/hooks/queries/useApply.query';
+import {HEADER_HEIGHT} from '@/constants/ui';
 
 export const Header = () => {
   const router = useRouter();
@@ -23,12 +24,16 @@ export const Header = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const {user, isInitialized} = useAuthStore(
+  const {user, isInitialized, isAuthenticated} = useAuthStore(
     useShallow((state) => ({
       user: state.user,
       isInitialized: state.isInitialized,
+      isAuthenticated: state.isAuthenticated,
     }))
   );
+
+  const {data: applicationStatus} = useApplicationStatusQuery(isAuthenticated);
+  const hasSubmitted = applicationStatus?.isSubmitted ?? false;
 
   const handleLogoutClick = () => {
     mutate();
@@ -36,7 +41,6 @@ export const Header = () => {
   };
 
   const menuItems = [...HEADER_ITEMS];
-  const hasSubmitted = useSubmissionStore((state) => state.hasSubmitted);
 
   if (user?.role === 'STAFF') {
     const applyIndex = menuItems.findIndex((item) => item.label === '지원하기');
@@ -50,16 +54,18 @@ export const Header = () => {
 
   const itemClass = (isActive: boolean) =>
     clsx(
-      'text-body-m flex h-22 items-center justify-center gap-2.5 px-[17px] py-6 transition-colors',
+      'text-body-l-sb text-center px-4.25 py-6 transition-colors duration-300',
       isActive ? 'text-white' : 'text-neutral-300 hover:text-white'
     );
 
   return (
     <>
-      <header className='sticky top-0 z-header flex h-22 w-full items-center justify-between bg-black px-[105px]'>
+      <header
+        style={{height: `${HEADER_HEIGHT}px`}}
+        className='sticky top-0 z-header flex w-full min-w-360 items-center justify-between bg-black pr-26.25 pl-6.25'>
         <div>
-          <Link href='/'>
-            <MainLogo />
+          <Link href='https://www.cotato.kr/' target='_blank'>
+            <MainLogo className='w-36.5' />
           </Link>
         </div>
         <div className='flex items-center gap-5'>
@@ -100,14 +106,16 @@ export const Header = () => {
             (user ? (
               <Dropdown
                 trigger={
-                  <div className='flex h-22 cursor-pointer items-center justify-center gap-2.5 px-[17px] py-6 text-body-m text-white'>
+                  <button
+                    type='button'
+                    className='flex cursor-pointer items-center justify-center gap-2.5 px-4.25 py-6 text-body-l-sb text-white'>
                     <SmallLogo /> {user.name}
-                  </div>
+                  </button>
                 }
-                className='absolute flex h-[30px] w-[102px] flex-col items-start gap-[10px] rounded-[4px] border border-primary bg-black px-[11px] py-[6px]'>
+                className='absolute rounded-sm border border-primary bg-black px-2 py-1'>
                 <button
                   onClick={handleLogoutClick}
-                  className='flex w-full items-center justify-start gap-[3px] text-body-s text-primary'>
+                  className='flex w-full items-center gap-0.75 text-body-l-sb text-primary'>
                   <Logout />
                   LOGOUT
                 </button>
@@ -115,7 +123,7 @@ export const Header = () => {
             ) : (
               <button
                 onClick={() => setIsModalOpen(true)}
-                className='flex h-22 items-center justify-center gap-2.5 px-[17px] py-6 text-body-m text-primary'>
+                className='px-4.25 text-center text-body-l-sb text-primary'>
                 LOGIN
               </button>
             ))}
